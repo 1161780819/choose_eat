@@ -1,0 +1,185 @@
+p_DWD_MNET_USE_DM_YYYYMM|4|5|-1|-1|删除重复数据|1||DELETE FROM VGOP_DWD.DWD_MNET_USE_DM_{YYYY}{MM}  WHERE  ETL_DATA_CYCLE ='{YYYY}-{MM}-{DD}'|null|
+P_SSM_ANALYSE_MU_01_HALL_YYYY|1|2|-1|-1|判断DW音乐基地用户使用汇总表是否存在|12||VGOP_DW.DW_MM_USE_MU_DM_{YYYY}{MM};|null|
+P_SSM_ANALYSE_MU_01_HALL_YYYY|2|53|-1|-1|判断DW音乐基地用户使用汇总表是否存在|15||VGOP_DW.DW_MM_USE_MU_DM_{YYYY}{MM};|null|
+P_SSM_ANALYSE_MU_01_HALL_YYYY|4|6|-1|-1|创建临时表|1||CREATE TABLE VGOP_SAOP.TMP_MUJD_SSM_ANALYSE_HALL_01_{YYYY} (
+  IDX_ID VARCHAR(32) NOT NULL,
+  SVC_ID VARCHAR(32) NOT NULL,
+  CITY_ID VARCHAR(32) NOT NULL,
+  BRAND_ID VARCHAR(32) NOT NULL,
+  STRUCT_ID VARCHAR(32),
+  DATE_STR VARCHAR(32) NOT NULL,
+  CURR_VAL DECIMAL(10,0),
+  LAST_VAL DECIMAL(10,0),
+  LAST_TREND DECIMAL(10,0),
+  SAME_VAL DECIMAL(10,0),
+  SAME_TREND DECIMAL(10,0),
+  INSERT_TIME TIMESTAMP
+)
+  IN TBS_ST01
+  DISTRIBUTE BY HASH ( IDX_ID ) ;|null|
+p_DWD_MNET_USE_DM_YYYYMM|5|99|-1|-1|插入数据|1||INSERT INTO VGOP_DWD.DWD_MNET_USE_DM_{YYYY}{MM} ( OP_TIME,AREA_ID,PHONE_NO, FLOW_TYPE_ID,MNET_FLOW,ETL_DATA_CYCLE  ) SELECT  '{YYYY}-{MM}-{DD}',    AREA_CODE , PHONE_NO,    FLUXTYPE ,    FLUX  , '{YYYY}-{MM}-{DD}' FROM VGOP_ODS.ODS_BS_MNET_USER_DS|null|
+P_SSM_ANALYSE_MU_01_HALL_YYYY|6|12|-1|-1|临时表入当月数据(厅店)|1||insert into VGOP_SAOP.TMP_MUJD_SSM_ANALYSE_HALL_01_{YYYY}
+                (
+  IDX_ID ,
+  SVC_ID ,
+  CITY_ID ,
+  BRAND_ID ,
+  STRUCT_ID ,
+  DATE_STR ,
+  CURR_VAL,
+  LAST_VAL,
+  LAST_TREND,
+  SAME_VAL ,
+  SAME_TREND ,
+  INSERT_TIME
+)
+select
+ 'M190007' IDX_ID ,
+  '19' SVC_ID,
+  area_id CITY_ID ,
+  BRAND_ID ,
+  case when 1=2 then '1'
+end STRUCT_ID ,
+'{YYYY}{MM}'  DATE_STR,
+ sum(CM_ORD_NUMS) CURR_VAL,
+  0 LAST_VAL ,
+  0 LAST_TREND ,
+  0 SAME_VAL ,
+  0 SAME_TREND ,
+   '{YYYY}-{MM}-{DD} 00:00:00.000000' INSERT_TIME  from VGOP_DW.DW_MM_USE_MU_DM_{YYYY}{MM} where
+ETL_DATA_CYCLE='{LDTASK_ID_NEW}'
+group by area_id,
+  BRAND_ID with ur;
+
+insert into VGOP_SAOP.TMP_MUJD_SSM_ANALYSE_HALL_01_{YYYY}
+ (
+  IDX_ID ,
+  SVC_ID ,
+  CITY_ID ,
+  BRAND_ID ,
+  STRUCT_ID ,
+  DATE_STR ,
+  CURR_VAL,
+  LAST_VAL,
+  LAST_TREND,
+  SAME_VAL ,
+  SAME_TREND ,
+  INSERT_TIME
+)
+select
+ 'M190007' IDX_ID ,
+  '19' SVC_ID,
+  country_id CITY_ID ,
+  BRAND_ID ,
+  case when 1=2 then '1' end STRUCT_ID ,
+'{YYYY}{MM}'  DATE_STR,
+ sum(CM_ORD_NUMS) CURR_VAL,
+  0 LAST_VAL ,
+  0 LAST_TREND ,
+  0 SAME_VAL ,
+  0 SAME_TREND ,
+  '{YYYY}-{MM}-{DD} 00:00:00.000000'
+from VGOP_DW.DW_MM_USE_MU_DM_{YYYY}{MM} where ETL_DATA_CYCLE='{LDTASK_ID_NEW}' and (area_id<>'998' or COUNTRY_ID<>'998' or section_id<>'998' or town_id<>'998' or CHN_ID<>'998')
+
+ group by country_id,
+  BRAND_ID with ur;
+insert into VGOP_SAOP.TMP_MUJD_SSM_ANALYSE_HALL_01_{YYYY}
+ (
+  IDX_ID ,
+  SVC_ID ,
+  CITY_ID ,
+  BRAND_ID ,
+  STRUCT_ID ,
+  DATE_STR ,
+  CURR_VAL,
+  LAST_VAL,
+  LAST_TREND,
+  SAME_VAL ,
+  SAME_TREND ,
+  INSERT_TIME
+)
+select
+ 'M190007' IDX_ID ,
+  '19' SVC_ID,
+  section_id CITY_ID ,
+  BRAND_ID ,
+  case when 1=2 then '1' end STRUCT_ID ,
+'{YYYY}{MM}'  DATE_STR,
+ sum(CM_ORD_NUMS) CURR_VAL,
+  0 LAST_VAL ,
+  0 LAST_TREND ,
+  0 SAME_VAL ,
+  0 SAME_TREND ,
+  '{YYYY}{MM}-{DD} 00:00:00.000000'
+ from VGOP_DW.DW_MM_USE_MU_DM_{YYYY}{MM} where ETL_DATA_CYCLE='{LDTASK_ID_NEW}' and (area_id<>'998' or COUNTRY_ID<>'998' or section_id<>'998' or town_id<>'998' or CHN_ID<>'998')
+
+group by section_id,
+  BRAND_ID with ur;
+insert into VGOP_SAOP.TMP_MUJD_SSM_ANALYSE_HALL_01_{YYYY} (
+  IDX_ID ,
+  SVC_ID ,
+  CITY_ID ,
+  BRAND_ID ,
+  STRUCT_ID ,
+  DATE_STR ,
+  CURR_VAL,
+  LAST_VAL,
+  LAST_TREND,
+  SAME_VAL ,
+  SAME_TREND ,
+  INSERT_TIME
+)
+select
+ 'M190007' IDX_ID ,
+  '19' SVC_ID,
+  NVL(CHN_ID,'998') CITY_ID ,
+  NVL(BRAND_ID,'998') ,
+  case when 1=2 then '1'
+end STRUCT_ID ,
+'{YYYY}{MM}'  DATE_STR,
+ sum(CM_ORD_NUMS) CURR_VAL,
+  0 LAST_VAL ,
+  0 LAST_TREND ,
+  0 SAME_VAL ,
+  0 SAME_TREND ,
+   '{YYYY}-{MM}-{DD} 00:00:00.000000'
+ from VGOP_DW.DW_MM_USE_MU_DM_{YYYY}{MM} where ETL_DATA_CYCLE='{LDTASK_ID_NEW}'
+and (area_id<>'998' or COUNTRY_ID<>'998' or section_id<>'998' or town_id<>'998' or CHN_ID<>'998')
+
+group by NVL(CHN_ID,'998')  ,
+  NVL(BRAND_ID,'998') ;
+insert into VGOP_SAOP.TMP_MUJD_SSM_ANALYSE_HALL_01_{YYYY} (
+  IDX_ID ,
+  SVC_ID ,
+  CITY_ID ,
+  BRAND_ID ,
+  STRUCT_ID ,
+  DATE_STR ,
+  CURR_VAL,
+  LAST_VAL,
+  LAST_TREND,
+  SAME_VAL ,
+  SAME_TREND ,
+  INSERT_TIME
+)
+select
+ 'M190007' IDX_ID ,
+  '19' SVC_ID,
+  NVL(TOWN_ID,'998') CITY_ID ,
+  NVL(BRAND_ID,'998') ,
+  case when 1=2 then '1'
+end STRUCT_ID ,
+'{YYYY}{MM}'  DATE_STR,
+ sum(CM_ORD_NUMS) CURR_VAL,
+  0 LAST_VAL ,
+  0 LAST_TREND ,
+  0 SAME_VAL ,
+  0 SAME_TREND ,
+  '{YYYY}-{MM}-{DD} 00:00:00.000000'
+ from VGOP_DW.DW_MM_USE_MU_DM_{YYYY}{MM} where ETL_DATA_CYCLE='{LDTASK_ID_NEW}'
+and (area_id<>'998' or COUNTRY_ID<>'998' or section_id<>'998' or town_id<>'998' or CHN_ID<>'998')
+
+group by NVL(TOWN_ID,'998') ,
+  NVL(BRAND_ID,'998') ;|null|
+P_YWFX_3_YYT_DAY|73|167|81|-1|判断表【DW本地彩铃日分析】是否存在数据|15||VGOP_DW.DW_CRING_DEV_DM_{YYYY}{MM}|null|
+P_YWFX_3_YYT_DAY|2|5|4|-1|判断临时表是否存在|12||VGOP_SAOP.TMP_CRING_YYT_SSM_ANALYSE_HALL_{YYYY}{MM}|null|
